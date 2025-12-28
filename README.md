@@ -3,6 +3,8 @@
 [![PyPI](https://img.shields.io/pypi/v/easyscrape.svg)](https://pypi.org/project/easyscrape-py/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/doudol/EasyScrape/actions/workflows/python-app.yml/badge.svg)](https://github.com/doudol/EasyScrape/actions)
+
 
 **Fast, secure web scraping for Python.**
 
