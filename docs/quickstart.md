@@ -5,7 +5,7 @@ Get scraping in under 5 minutes.
 ## Installation
 
 ```bash
-pip install easyscrape
+pip install easyscrape-py
 ```
 
 ## Your First Scrape
