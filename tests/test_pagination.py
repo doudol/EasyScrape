@@ -78,7 +78,10 @@ class TestFindNextLink:
         result.text = '<html><body><a href="/page2" rel="next">Next</a></body></html>'
         result.final_url = "https://example.com/"
         
-        # Mock parser
+        # Mock css_list to return href
+        result.extractor.css_list.return_value = ["/page2"]
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="/page2" rel="next">Next</a>'
         anchor.attributes = {"href": "/page2"}
@@ -92,6 +95,10 @@ class TestFindNextLink:
         result.text = '<html><a href="/page2" class="pagination-next">Next</a></html>'
         result.final_url = "https://example.com/"
         
+        # Mock css_list to return href
+        result.extractor.css_list.return_value = ["/page2"]
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="/page2" class="pagination-next">Next</a>'
         anchor.attributes = {"href": "/page2"}
@@ -105,6 +112,10 @@ class TestFindNextLink:
         result.text = '<html><a href="/page2">next</a></html>'
         result.final_url = "https://example.com/"
         
+        # Mock css_list to return empty for common selectors, fall back to regex
+        result.extractor.css_list.return_value = []
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="/page2">next</a>'
         anchor.attributes = {"href": "/page2"}
@@ -118,6 +129,10 @@ class TestFindNextLink:
         result.text = '<html><a href="https://other.com/page2" rel="next">Next</a></html>'
         result.final_url = "https://example.com/"
         
+        # Mock css_list to return absolute href
+        result.extractor.css_list.return_value = ["https://other.com/page2"]
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="https://other.com/page2" rel="next">Next</a>'
         anchor.attributes = {"href": "https://other.com/page2"}
@@ -131,6 +146,10 @@ class TestFindNextLink:
         result.text = '<html><a href="/page2" data-action="load-more">More</a></html>'
         result.final_url = "https://example.com/"
         
+        # Mock css_list to return empty for common selectors
+        result.extractor.css_list.return_value = []
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="/page2" data-action="load-more">More</a>'
         anchor.attributes = {"href": "/page2"}
@@ -144,6 +163,10 @@ class TestFindNextLink:
         result.text = '<html><a href="/about">About</a></html>'
         result.final_url = "https://example.com/"
         
+        # Mock css_list to return empty
+        result.extractor.css_list.return_value = []
+        
+        # Mock parser for fallback
         anchor = MagicMock()
         anchor.html = '<a href="/about">About</a>'
         anchor.attributes = {"href": "/about"}
@@ -171,16 +194,12 @@ class TestPaginate:
         assert gen is not None
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_yields_results(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_yields_results(self, mock_scrape):
         # First result with no next link
         result1 = MagicMock()
         result1.text = "<html></html>"
         result1.final_url = "https://example.com/"
+        result1.extractor.css_list.return_value = []
         result1.extractor.parser.css.return_value = []
         mock_scrape.return_value = result1
         
@@ -188,15 +207,11 @@ class TestPaginate:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_stop_if_callback(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_stop_if_callback(self, mock_scrape):
         result = MagicMock()
         result.text = "<html></html>"
         result.final_url = "https://example.com/"
+        result.extractor.css_list.return_value = []
         result.extractor.parser.css.return_value = []
         mock_scrape.return_value = result
         
@@ -207,21 +222,16 @@ class TestPaginate:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_uses_next_selector(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_uses_next_selector(self, mock_scrape):
         result1 = MagicMock()
         result1.text = '<html><a class="next" href="/page2">Next</a></html>'
         result1.final_url = "https://example.com/page1"
-        result1.css.return_value = "/page2"
+        result1.extractor.css_list.return_value = ["/page2"]
         
         result2 = MagicMock()
         result2.text = '<html></html>'
         result2.final_url = "https://example.com/page2"
-        result2.css.return_value = None
+        result2.extractor.css_list.return_value = []
         
         mock_scrape.side_effect = [result1, result2]
         
@@ -246,12 +256,7 @@ class TestPaginateParam:
         assert gen is not None
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_iterates_page_range(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_iterates_page_range(self, mock_scrape):
         mock_scrape.return_value = MagicMock()
         
         results = list(paginate_param(
@@ -264,12 +269,7 @@ class TestPaginateParam:
         assert mock_scrape.call_count == 3
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_stop_if_callback(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_stop_if_callback(self, mock_scrape):
         mock_scrape.return_value = MagicMock()
         
         call_count = 0
@@ -287,12 +287,7 @@ class TestPaginateParam:
         assert len(results) == 2
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_handles_scrape_exception(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_handles_scrape_exception(self, mock_scrape):
         mock_scrape.side_effect = Exception("Network error")
         
         results = list(paginate_param("https://example.com", start=1, end=5))
@@ -312,12 +307,7 @@ class TestPaginateOffset:
         assert gen is not None
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_iterates_offsets(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_iterates_offsets(self, mock_scrape):
         mock_scrape.return_value = MagicMock()
         
         results = list(paginate_offset(
@@ -330,12 +320,7 @@ class TestPaginateOffset:
         assert len(results) == 3
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_stop_if_callback(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_stop_if_callback(self, mock_scrape):
         mock_scrape.return_value = MagicMock()
         
         def stop_always(r):
@@ -349,12 +334,7 @@ class TestPaginateOffset:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_custom_param_name(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_custom_param_name(self, mock_scrape):
         mock_scrape.return_value = MagicMock()
         
         list(paginate_offset(
@@ -379,12 +359,7 @@ class TestCrawl:
         assert hasattr(gen, "__next__")
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_respects_max_pages(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_respects_max_pages(self, mock_scrape):
         result = MagicMock()
         result.final_url = "https://example.com/"
         result.links.return_value = []
@@ -394,12 +369,7 @@ class TestCrawl:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_follows_links(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_follows_links(self, mock_scrape):
         result1 = MagicMock()
         result1.final_url = "https://example.com/"
         result1.links.return_value = ["https://example.com/page2"]
@@ -414,12 +384,7 @@ class TestCrawl:
         assert len(results) == 2
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_same_domain_filter(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_same_domain_filter(self, mock_scrape):
         result = MagicMock()
         result.final_url = "https://example.com/"
         result.links.return_value = [
@@ -438,12 +403,7 @@ class TestCrawl:
         assert len(results) == 2
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_stop_if_callback(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_stop_if_callback(self, mock_scrape):
         result = MagicMock()
         result.final_url = "https://example.com/"
         result.links.return_value = ["https://example.com/page2"]
@@ -456,12 +416,7 @@ class TestCrawl:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_deduplicates_urls(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_deduplicates_urls(self, mock_scrape):
         result = MagicMock()
         result.final_url = "https://example.com/"
         # Returns the same URL multiple times
@@ -477,18 +432,9 @@ class TestCrawl:
         assert len(results) == 1
 
     @patch('easyscrape.pagination.scrape')
-    @patch('easyscrape.pagination.Session')
-    def test_handles_scrape_exception(self, mock_session, mock_scrape):
-        mock_ctx = MagicMock()
-        mock_session.return_value.__enter__ = MagicMock(return_value=mock_ctx)
-        mock_session.return_value.__exit__ = MagicMock(return_value=False)
-        
+    def test_handles_scrape_exception(self, mock_scrape):
         mock_scrape.side_effect = Exception("Network error")
         
         results = list(crawl("https://example.com", max_pages=5))
         # Should handle exception and continue (return empty)
         assert len(results) == 0
-
-
-
-    
