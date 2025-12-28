@@ -8,7 +8,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it by emailing the maintainers directly rather than opening a public issue.
+If you discover a security vulnerability, please report it by emailing the maintainers directly rather than opening a public issue. Email at totallynotitlol@gmail.com
 
 **Please include:**
 - Description of the vulnerability
