@@ -12,7 +12,7 @@ Thank you for your interest in contributing to EasyScrape! This document provide
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/easyscrape.git
+git clone https://github.com/doudol/easyscrape.git
 cd easyscrape
 
 # Create virtual environment
