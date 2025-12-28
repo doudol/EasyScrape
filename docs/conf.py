@@ -2,7 +2,7 @@
 """EasyScrape documentation configuration."""
 
 project = "EasyScrape"
-copyright = "2024, EasyScrape Contributors"
+copyright = "2026, EasyScrape Contributors"
 author = "EasyScrape Contributors"
 release = "0.1.0"
 
