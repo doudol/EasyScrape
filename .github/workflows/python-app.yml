@@ -1,0 +1,59 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install package with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          pytest --tb=short -q
+
+      - name: Check code coverage
+        run: |
+          pytest --cov=easyscrape --cov-report=term-missing
+        continue-on-error: true  # Don't fail if coverage drops slightly
+
+      - name: Verify package builds
+        run: |
+          python -m build
+
+      - name: Run linting (ruff) - advisory only
+        run: |
+          ruff check easyscrape/
+        continue-on-error: true  # Don't fail the build for style issues
+
+      - name: Run type checking (mypy) - advisory only
+        run: |
+          mypy easyscrape/ --ignore-missing-imports
+        continue-on-error: true  # Don't fail for type hints
