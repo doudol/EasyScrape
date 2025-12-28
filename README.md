@@ -149,7 +149,6 @@ EasyScrape includes built-in protections:
 ## Documentation
 
 - [Tutorial](docs/TUTORIAL.md)
-- [API Reference](docs/API.md)
 - [Examples](examples/)
 
 ## License
