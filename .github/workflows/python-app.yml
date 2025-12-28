@@ -30,30 +30,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install package with dev dependencies
+      - name: Install package with ALL test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev,export,http2]"  # CRITICAL: Includes pandas and h2
 
       - name: Run tests
         run: |
           pytest --tb=short -q
+        # pass
 
       - name: Check code coverage
         run: |
           pytest --cov=easyscrape --cov-report=term-missing
-        continue-on-error: true  # Don't fail if coverage drops slightly
+        continue-on-error: true  # ignore
 
       - name: Verify package builds
         run: |
           python -m build
-
+        # pass
       - name: Run linting (ruff) - advisory only
         run: |
           ruff check easyscrape/
-        continue-on-error: true  # Don't fail the build for style issues
+        continue-on-error: true  # ignore
 
       - name: Run type checking (mypy) - advisory only
         run: |
           mypy easyscrape/ --ignore-missing-imports
-        continue-on-error: true  # Don't fail for type hints
+        continue-on-error: true  # ignore
