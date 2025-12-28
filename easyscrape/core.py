@@ -317,6 +317,10 @@ def scrape(
         allow_localhost=config.allow_localhost,
     )
 
+    from .stats import get_metrics_collector
+    collector = get_metrics_collector()
+    metrics = collector.start(validated_url, "GET")
+
     start_time = time.perf_counter()
     max_retries = config.max_retries
     last_error: Exception | None = None
@@ -352,6 +356,13 @@ def scrape(
 
                 request_time = time.perf_counter() - start_time
 
+                metrics.complete(
+                    status_code=response.status_code,
+                    bytes_received=len(response.content),
+                    cached=False
+                )
+                collector.finish(metrics)
+
                 return ScrapeResult(
                     text=response.text,
                     content=response.content,
@@ -370,6 +381,8 @@ def scrape(
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
                 continue
+            metrics.fail(f"Timeout: {str(e)}")
+            collector.finish(metrics)
             raise last_error
 
         except httpx.ConnectError as e:
@@ -377,6 +390,8 @@ def scrape(
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
                 continue
+            metrics.fail(f"Connection error: {str(e)}")
+            collector.finish(metrics)
             raise last_error
 
         except Exception as e:
@@ -384,7 +399,12 @@ def scrape(
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
                 continue
+            metrics.fail(f"Error: {str(e)}")
+            collector.finish(metrics)
             raise last_error
+
+    metrics.fail(f"Retry exhausted after {max_retries + 1} attempts")
+    collector.finish(metrics)
 
     raise RetryExhausted(
         f"All {max_retries + 1} attempts failed",
