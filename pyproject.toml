@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "easyscrape"
+name = "easyscrape-py"
 version = "0.1.0"
 description = "Fast, secure web scraping for Python"
 readme = "README.md"
@@ -37,6 +37,7 @@ dependencies = [
     "httpx>=0.25.0",
     "selectolax>=0.3.17",
     "lxml>=4.9.0",
+    "httpx[http2]>=0.25.0"
 ]
 
 [project.optional-dependencies]
