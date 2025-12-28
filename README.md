@@ -158,3 +158,6 @@ EasyScrape includes built-in protections:
 ## License
 
 MIT
+
+## Important Disclosure:
+This project was NOT thoroughly tested and is currently in beta. **Expect Bugs.**
