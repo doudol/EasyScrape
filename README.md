@@ -4,6 +4,8 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/doudol/EasyScrape/actions/workflows/python-app.yml/badge.svg)](https://github.com/doudol/EasyScrape/actions)
+[![Coverage](https://codecov.io/gh/doudol/EasyScrape/branch/main/graph/badge.svg)](https://codecov.io/gh/doudol/EasyScrape)
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://easyscrape.readthedocs.io/en/latest/)
 
 
 **Fast, secure web scraping for Python.**
