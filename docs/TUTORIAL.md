@@ -55,7 +55,7 @@ EasyScrape was designed with three principles:
 ### Basic Installation
 
 ```bash
-pip install easyscrape
+pip install easyscrape-py
 ```
 
 ### Verify Installation
