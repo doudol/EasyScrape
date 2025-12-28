@@ -27,17 +27,17 @@ print(result.css("h1"))  # "Example Domain"
 ## Installation
 
 ```bash
-pip install easyscrape
+pip install easyscrape-py
 
 # Optional: JavaScript rendering
-pip install easyscrape[browser]
+pip install easyscrape-py[browser]
 playwright install chromium
 
 # Optional: Data export (Excel, Parquet)
-pip install easyscrape[export]
+pip install easyscrape-py[export]
 
 # Everything
-pip install easyscrape[all]
+pip install easyscrape-py[all]
 ```
 
 ## Quick Start
