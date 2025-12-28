@@ -2,7 +2,7 @@
 
 All notable changes to EasyScrape.
 
-## [0.1.0] - 2024
+## [0.1.0] - 2025
 
 ### Added
 
