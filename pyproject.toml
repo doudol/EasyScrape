@@ -71,10 +71,10 @@ all = [
 easyscrape = "easyscrape.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/easyscrape/easyscrape"
+Homepage = "https://github.com/doudol/easyscrape"
 Documentation = "https://easyscrape.readthedocs.io"
-Repository = "https://github.com/easyscrape/easyscrape"
-Changelog = "https://github.com/easyscrape/easyscrape/blob/main/CHANGELOG.md"
+Repository = "https://github.com/doudol/easyscrape"
+Changelog = "https://github.com/doudol/easyscrape/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["easyscrape"]
