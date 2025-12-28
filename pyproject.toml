@@ -1,0 +1,111 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "easyscrape"
+version = "0.1.0"
+description = "Fast, secure web scraping for Python"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "EasyScrape Contributors" },
+]
+keywords = [
+    "scraping",
+    "web-scraping",
+    "crawler",
+    "http",
+    "async",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "selectolax>=0.3.17",
+    "lxml>=4.9.0",
+]
+
+[project.optional-dependencies]
+browser = [
+    "playwright>=1.40.0",
+]
+stealth = [
+    "curl_cffi>=0.5.0",
+]
+export = [
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "pyarrow>=14.0.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "respx>=0.20.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+]
+all = [
+    "easyscrape[browser,stealth,export,dev]",
+]
+
+[project.scripts]
+easyscrape = "easyscrape.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/easyscrape/easyscrape"
+Documentation = "https://easyscrape.readthedocs.io"
+Repository = "https://github.com/easyscrape/easyscrape"
+Changelog = "https://github.com/easyscrape/easyscrape/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["easyscrape"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "UP",
+    "B",
+    "C4",
+    "SIM",
+]
+ignore = [
+    "E501",
+    "B008",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

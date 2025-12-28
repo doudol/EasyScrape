@@ -155,4 +155,3 @@ EasyScrape includes built-in protections:
 ## License
 
 MIT
-
