@@ -121,6 +121,33 @@ def _find_next_link(
     For reliable pagination, use `paginate_param()` with the known
     parameter name, or provide a `next_selector` to `paginate()`.
     """
+    # Ensure HTML is loaded
+    if not result.text:
+        return None
+
+    # Try common CSS selectors first (faster and more reliable)
+    common_selectors = [
+        "a[rel='next']",
+        "a[rel=next]",
+        "li.next a",
+        "a.next",
+        ".pagination .next a",
+        ".pager .next a",
+        "a.pagination-next",
+    ]
+    
+    for selector in common_selectors:
+        try:
+            links = result.extractor.css_list(selector, attr="href")
+            if links and links[0]:
+                href = links[0]
+                if not href.startswith(("http://", "https://")):
+                    href = urljoin(result.final_url, href)
+                return href
+        except Exception:
+            continue
+
+    # Fallback to regex pattern matching on anchor HTML
     default_patterns = [
         r'rel=["\']?next["\']?',
         r'class=["\'][^"\']*next[^"\']*["\']',
@@ -130,13 +157,10 @@ def _find_next_link(
         r'>&gt;<',
         r'>»<',
         r'>›<',
+        r'>→<',
     ]
 
     search_patterns = patterns or default_patterns
-
-    # Ensure HTML is loaded
-    if not result.text:
-        return None
 
     # Use selectolax parser for anchor extraction (10x faster than BS4)
     for anchor in result.extractor.parser.css("a[href]"):
@@ -272,41 +296,41 @@ def paginate(
     current_url = start_url
     page_count = 0
 
-    with Session(cfg) as sess:
-        while current_url and page_count < max_pages:
-            # Normalise URL for duplicate detection
-            normalised = current_url.rstrip("/").lower()
-            if normalised in visited:
-                break
-            visited.add(normalised)
+    while current_url and page_count < max_pages:
+        # Normalise URL for duplicate detection
+        normalised = current_url.rstrip("/").lower()
+        if normalised in visited:
+            break
+        visited.add(normalised)
 
-            try:
-                result = scrape(current_url, cfg, sess)
-            except Exception:
-                break
+        try:
+            result = scrape(current_url, cfg)
+        except Exception:
+            break
 
-            yield result
-            page_count += 1
+        yield result
+        page_count += 1
 
-            # Check stop condition
-            if stop_if and stop_if(result):
-                break
+        # Check stop condition
+        if stop_if and stop_if(result):
+            break
 
-            # Find next page URL
-            if next_selector:
-                next_href = result.css(next_selector, "href")
-                if next_href:
-                    if not next_href.startswith(("http://", "https://")):
-                        next_href = urljoin(result.final_url, next_href)
-                    current_url = next_href
-                else:
-                    break
+        # Find next page URL
+        if next_selector:
+            next_links = result.extractor.css_list(next_selector, attr="href")
+            if next_links:
+                next_href = next_links[0]
+                if not next_href.startswith(("http://", "https://")):
+                    next_href = urljoin(result.final_url, next_href)
+                current_url = next_href
             else:
-                next_url = _find_next_link(result, next_patterns)
-                if next_url:
-                    current_url = next_url
-                else:
-                    break
+                break
+        else:
+            next_url = _find_next_link(result, next_patterns)
+            if next_url:
+                current_url = next_url
+            else:
+                break
 
 
 def paginate_param(
@@ -365,24 +389,23 @@ def paginate_param(
     """
     cfg = config or Config()
 
-    with Session(cfg) as sess:
-        for page_num in range(start, end + 1):
-            # Construct URL with page parameter
-            parsed = urlparse(base_url)
-            params = parse_qs(parsed.query, keep_blank_values=True)
-            params[param] = [str(page_num)]
-            new_query = urlencode(params, doseq=True)
-            url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{new_query}"
+    for page_num in range(start, end + 1):
+        # Construct URL with page parameter
+        parsed = urlparse(base_url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        params[param] = [str(page_num)]
+        new_query = urlencode(params, doseq=True)
+        url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{new_query}"
 
-            try:
-                result = scrape(url, cfg, sess)
-            except Exception:
-                break
+        try:
+            result = scrape(url, cfg)
+        except Exception:
+            break
 
-            yield result
+        yield result
 
-            if stop_if and stop_if(result):
-                break
+        if stop_if and stop_if(result):
+            break
 
 
 def paginate_offset(
@@ -445,27 +468,26 @@ def paginate_offset(
     """
     cfg = config or Config()
 
-    with Session(cfg) as sess:
-        offset = start
-        while offset <= max_offset:
-            # Construct URL with offset parameter
-            parsed = urlparse(base_url)
-            params = parse_qs(parsed.query, keep_blank_values=True)
-            params[param] = [str(offset)]
-            new_query = urlencode(params, doseq=True)
-            url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{new_query}"
+    offset = start
+    while offset <= max_offset:
+        # Construct URL with offset parameter
+        parsed = urlparse(base_url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        params[param] = [str(offset)]
+        new_query = urlencode(params, doseq=True)
+        url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{new_query}"
 
-            try:
-                result = scrape(url, cfg, sess)
-            except Exception:
-                break
+        try:
+            result = scrape(url, cfg)
+        except Exception:
+            break
 
-            yield result
+        yield result
 
-            if stop_if and stop_if(result):
-                break
+        if stop_if and stop_if(result):
+            break
 
-            offset += step
+        offset += step
 
 
 def crawl(
@@ -552,39 +574,38 @@ def crawl(
     queue: deque[str] = deque([start_url])
     page_count = 0
 
-    with Session(cfg) as sess:
-        while queue and page_count < max_pages:
-            url = queue.popleft()
+    while queue and page_count < max_pages:
+        url = queue.popleft()
 
-            # Normalise for duplicate detection
-            normalised = url.rstrip("/").lower()
-            if normalised in visited:
+        # Normalise for duplicate detection
+        normalised = url.rstrip("/").lower()
+        if normalised in visited:
+            continue
+        visited.add(normalised)
+
+        try:
+            result = scrape(url, cfg)
+        except Exception:
+            continue
+
+        yield result
+        page_count += 1
+
+        if stop_if and stop_if(result):
+            break
+
+        # Extract and filter new links
+        new_links = result.links(link_pattern, absolute=True)
+        for link in new_links:
+            link_normalised = link.rstrip("/").lower()
+            if link_normalised in visited:
                 continue
-            visited.add(normalised)
 
-            try:
-                result = scrape(url, cfg, sess)
-            except Exception:
+            # Domain filter
+            if same_domain and urlparse(link).netloc != start_domain:
                 continue
 
-            yield result
-            page_count += 1
-
-            if stop_if and stop_if(result):
-                break
-
-            # Extract and filter new links
-            new_links = result.links(link_pattern, absolute=True)
-            for link in new_links:
-                link_normalised = link.rstrip("/").lower()
-                if link_normalised in visited:
-                    continue
-
-                # Domain filter
-                if same_domain and urlparse(link).netloc != start_domain:
-                    continue
-
-                queue.append(link)
+            queue.append(link)
 
 
 # These aliases improve API discoverability and match common naming expectations
